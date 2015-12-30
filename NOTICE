@@ -1,0 +1,13 @@
+nifi-client
+Copyright 2015- Matthew Burgess
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+The following binary dependencies are used under an Apache Software License v2:
+
+(ASLv2) Groovy (
+
+(ASLv2) HTTPBuilder
+
+Please see LICENSE for additional copyright and licensing information.
