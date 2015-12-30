@@ -13,19 +13,130 @@
  * limitations under the License.
  *
  ******************************************************************************/
+plugins {
+    id "com.jfrog.bintray" version "1.4"
+}
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'idea'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
-apply plugin: "groovy"
-apply plugin: "application"
 
-version = '1.0-SNAPSHOT'
+
+version = '0.1'
+description = "A Groovy/Java client for interacting with an Apache NiFi instance"
+group = 'mattyb149'
+status = 'RELEASE'
+project.ext.apiKey = System.getenv('BINTRAY_API_KEY') ?: System.getProperty('BINTRAY_API_KEY')
 
 repositories {
     mavenCentral()
+}
+
+
+configurations {
+    shell
 }
 
 dependencies {
     compile 'org.codehaus.groovy:groovy-all:2.4.5'
     compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
     compile 'org.apache.httpcomponents:httpmime:4.2.1'
+
+    shell("jline:jline:2.11") {
+        exclude(group: 'junit', module: 'junit')
+    }
+    shell('commons-cli:commons-cli:1.2')
+
     testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+
+    shell 'org.codehaus.groovy:groovy-all:2.4.5'
+    shell 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
+    shell 'org.apache.httpcomponents:httpmime:4.2.1'
+}
+
+task(shell, dependsOn: 'classes') << {
+    def classpath = sourceSets.main.runtimeClasspath + configurations.shell
+    def command = [
+            System.getProperty('JAVA_HOME') ? "${System.getProperty('JAVA_HOME') / bin / java}" : 'java',
+            '-cp', classpath.collect().join(':'),
+            'org.codehaus.groovy.tools.shell.Main',
+            '--color',
+            '--terminal', 'unix',
+            '-Dgroovysh.prompt=nifi', '-e', '"import nifi.client.*"'
+    ]
+    def proc = new ProcessBuilder(command)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectInput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+    proc.waitFor()
+}
+
+// custom tasks for creating source/javadoc jars
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar, javadocJar
+}
+
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            if (plugins.hasPlugin('war')) {
+                from components.web
+            } else {
+                from components.java
+            }
+
+            artifact sourcesJar
+            artifact javadocJar
+        }
+    }
+}
+
+
+bintray {
+    user = System.getProperty('BINTRAY_USER') ?: 'mattyb149'
+    key = project.ext.apiKey
+    //configurations = ['default']
+    publications = ['mavenJava']
+    filesSpec {
+        from 'files'
+        into 'standalone_files/level1'
+        rename '(.+)\\.(.+)', '$1-suffix.$2'
+    }
+
+    dryRun = false
+    pkg {
+        repo = 'maven'
+        userOrg = group
+        name = project.name
+        desc = project.description
+        websiteUrl = 'https://github.com/mattyb149/nifi-client'
+        issueTrackerUrl = 'https://github.com/mattyb149/nifi-client/issues'
+        vcsUrl = 'https://github.com/mattyb149/nifi-client.git'
+        licenses = ['Apache-2.0']
+        labels = ['apache', 'nifi', 'groovy']
+        attributes= ['plat': ['linux', 'osx']]
+        publicDownloadNumbers = true
+        version {
+            vcsTag = project.version
+        }
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = "2.10"
 }
