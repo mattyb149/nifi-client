@@ -55,7 +55,7 @@ dependencies {
     shell 'org.apache.httpcomponents:httpmime:4.2.1'
 }
 
-task(client, dependsOn: 'classes') << {
+task(shell, dependsOn: 'classes') << {
     def classpath = sourceSets.main.runtimeClasspath + configurations.shell
     def command = [
             System.getProperty('JAVA_HOME') ? "${System.getProperty('JAVA_HOME') / bin / java}" : 'java',
@@ -63,7 +63,7 @@ task(client, dependsOn: 'classes') << {
             'org.codehaus.groovy.tools.shell.Main',
             '--color',
             '--terminal', 'unix',
-            '-Dgroovysh.prompt=nifi', '-e', '"import nifi.client.*"'
+            '-Dgroovysh.prompt=nifi-shell', '-e', '"import nifi.client.*"'
     ]
     def proc = new ProcessBuilder(command)
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)

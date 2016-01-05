@@ -125,4 +125,16 @@ class Template implements Map<String, String> {
         nifi.templates.reload()
     }
 
+    def rightShift(file) {
+        export(file)
+    }
+
+    def export(file) {
+        def exportId = this.id
+        def template = "${nifi.urlString}/nifi-api/controller/templates/$exportId".toURL().text.getBytes('UTF-8')
+        (file as File).withOutputStream { out ->
+            out.write(template)
+        }
+    }
+
 }
