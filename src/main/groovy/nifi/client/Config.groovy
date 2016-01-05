@@ -16,38 +16,25 @@
 package nifi.client
 
 import groovy.json.JsonSlurper
-import groovyx.net.http.HTTPBuilder
 
 /**
  * Created by mburgess on 12/30/15.
  */
-class NiFi {
-    String urlString
-    Processors processors
-    Templates templates
-    Controller controller
-    def http
+class Config {
+    NiFi nifi
+    private final JsonSlurper slurper = new JsonSlurper()
+    private Object config
+    private clientId
 
-    private JsonSlurper slurper = new JsonSlurper()
-
-    private NiFi(String url) {
-        this.urlString = url
-        this.http = this.http = new HTTPBuilder(url)
-        this.processors = new Processors(this)
-        this.templates = new Templates(this)
-        this.controller = new Controller(this)
+    protected Config(NiFi nifi) {
+        super()
+        this.nifi = nifi
     }
 
-    static NiFi bind(URL url) {
-        return new NiFi(url.toString())
+    def propertyMissing(String name) {
+        def s = slurper.parseText("${nifi.urlString}/nifi-api/controller/config".toURL().text)
+        config = s?.config
+        clientId =  s?.revision?.clientId
+        config[name]
     }
-
-    static NiFi bind(String url) {
-        return new NiFi(url)
-    }
-
-    long getCurrentVersion() {
-        return slurper.parseText("${urlString}/nifi-api/controller/revision".toURL().text)?.revision?.version ?: -1
-    }
-
 }

@@ -14,16 +14,14 @@
  *
  ******************************************************************************/
 plugins {
-    id "com.jfrog.bintray" version "1.4"
+    id 'com.jfrog.bintray' version '1.4'
+    id 'java'
+    id 'maven'
+    id 'maven-publish'
+    id 'signing'
+    id 'groovy'
+    id 'com.github.johnrengelman.shadow' version '1.2.2'
 }
-apply plugin: 'java'
-apply plugin: 'groovy'
-apply plugin: 'idea'
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
-
-
 
 version = '0.1'
 description = "A Groovy/Java client for interacting with an Apache NiFi instance"
@@ -57,7 +55,7 @@ dependencies {
     shell 'org.apache.httpcomponents:httpmime:4.2.1'
 }
 
-task(shell, dependsOn: 'classes') << {
+task(client, dependsOn: 'classes') << {
     def classpath = sourceSets.main.runtimeClasspath + configurations.shell
     def command = [
             System.getProperty('JAVA_HOME') ? "${System.getProperty('JAVA_HOME') / bin / java}" : 'java',
@@ -102,6 +100,7 @@ publishing {
 
             artifact sourcesJar
             artifact javadocJar
+            artifact shadowJar
         }
     }
 }
@@ -129,7 +128,7 @@ bintray {
         vcsUrl = 'https://github.com/mattyb149/nifi-client.git'
         licenses = ['Apache-2.0']
         labels = ['apache', 'nifi', 'groovy']
-        attributes= ['plat': ['linux', 'osx']]
+        attributes = ['plat': ['linux', 'osx']]
         publicDownloadNumbers = true
         version {
             vcsTag = project.version
