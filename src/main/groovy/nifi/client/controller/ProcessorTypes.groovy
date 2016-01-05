@@ -13,107 +13,98 @@
  * limitations under the License.
  *
  ******************************************************************************/
-package nifi.client
+package nifi.client.controller
 
 import groovy.json.JsonSlurper
+import nifi.client.NiFi
 
 /**
  * Created by mburgess on 12/30/15.
  */
-class Prioritizers implements Map<String, Object> {
+class ProcessorTypes implements Map<String, Object> {
     NiFi nifi
     private final JsonSlurper slurper = new JsonSlurper()
-    protected final Map<String, Object> prioritizers = [:]
+    protected final Map<String, Object> processorTypes = [:]
 
-    protected Prioritizers(NiFi nifi) {
+    protected ProcessorTypes(NiFi nifi) {
         super()
         this.nifi = nifi
     }
 
-
     @Override
     int size() {
         reload()
-        return prioritizers.size()
+        return processorTypes.size()
     }
 
     @Override
     boolean isEmpty() {
         reload()
-        return prioritizers.isEmpty()
+        return processorTypes.isEmpty()
     }
 
     @Override
     boolean containsKey(Object key) {
         reload()
-        return prioritizers.containsKey(key)
+        return processorTypes.containsKey(key)
     }
 
     @Override
     boolean containsValue(Object value) {
         reload()
-        return prioritizers.containsValue(value)
+        return processorTypes.containsValue(value)
     }
 
     @Override
     Object get(Object key) {
         reload()
-        return prioritizers.get(key)
+        return processorTypes.get(key)
     }
 
     @Override
     Object put(String key, Object value) {
-        throw new UnsupportedOperationException('Prioritizer Map is immutable (for now)')
+        throw new UnsupportedOperationException('Processor Map is immutable (for now)')
     }
 
     @Override
     Object remove(Object key) {
-        throw new UnsupportedOperationException('Prioritizer Map is immutable (for now)')
+        throw new UnsupportedOperationException('Processor Map is immutable (for now)')
     }
 
     @Override
     void putAll(Map<? extends String, ? extends Object> m) {
-        throw new UnsupportedOperationException('Prioritizer Map is immutable (for now)')
+        throw new UnsupportedOperationException('Processor Map is immutable (for now)')
     }
 
     @Override
     void clear() {
-        throw new UnsupportedOperationException('Prioritizer Map is immutable (for now)')
+        throw new UnsupportedOperationException('Processor Map is immutable (for now)')
     }
 
     @Override
     Set<String> keySet() {
         reload()
-        prioritizers.keySet()
+        processorTypes.keySet()
     }
 
     @Override
     Collection<Object> values() {
         reload()
-        prioritizers.values()
+        processorTypes.values()
     }
 
     @Override
     Set<Map.Entry<String, Object>> entrySet() {
         reload()
-        prioritizers.entrySet()
-    }
-
-
-    private String getSimpleName(String name) {
-        name[(name.lastIndexOf('.')+1)..(-1)]
-    }
-
-    Collection<String> types() {
-        values().collect { getSimpleName(it.type) }.unique()
+        processorTypes.entrySet()
     }
 
     def reload() {
-        synchronized (this.prioritizers) {
-            def procs = slurper.parseText("${nifi.urlString}/nifi-api/controller/prioritizers".toURL().text).prioritizerTypes
-            def map = this.prioritizers
+        synchronized (this.processorTypes) {
+            def procs = slurper.parseText("${nifi.urlString}/nifi-api/controller/processor-types".toURL().text).processorTypes
+            def map = this.processorTypes
             procs.each { p ->
-                map.put(getSimpleName(p.type), p)
+                map.put(nifi.client.Util.getSimpleName(p.type), p)
             }
         }
     }

@@ -20,21 +20,21 @@ import groovy.json.JsonSlurper
 /**
  * Created by mburgess on 12/30/15.
  */
-class About {
+class SystemDiagnostics {
     NiFi nifi
     private final JsonSlurper slurper = new JsonSlurper()
-    private Object about
+    private Object status
     private clientId
 
-    protected About(NiFi nifi) {
+    protected SystemDiagnostics(NiFi nifi) {
         super()
         this.nifi = nifi
     }
 
     def propertyMissing(String name) {
-        def s = slurper.parseText("${nifi.urlString}/nifi-api/controller/bulletinBoard".toURL().text)
-        about = s?.about
+        def s = slurper.parseText("${nifi.urlString}/nifi-api/system-diagnostics".toURL().text)
+        status = s?.systemDiagnostics
         clientId =  s?.revision?.clientId
-        about[name]
+        status[name]
     }
 }

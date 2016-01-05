@@ -17,6 +17,7 @@ package nifi.client
 
 import groovy.json.JsonSlurper
 import groovyx.net.http.HTTPBuilder
+import nifi.client.controller.Controller
 
 /**
  * Created by mburgess on 12/30/15.
@@ -26,6 +27,7 @@ class NiFi {
     Processors processors
     Templates templates
     Controller controller
+    SystemDiagnostics system
     def http
 
     private JsonSlurper slurper = new JsonSlurper()
@@ -36,6 +38,7 @@ class NiFi {
         this.processors = new Processors(this)
         this.templates = new Templates(this)
         this.controller = new Controller(this)
+        this.system = new SystemDiagnostics(this)
     }
 
     static NiFi bind(URL url) {

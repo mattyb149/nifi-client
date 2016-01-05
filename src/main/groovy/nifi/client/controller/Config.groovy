@@ -13,28 +13,29 @@
  * limitations under the License.
  *
  ******************************************************************************/
-package nifi.client
+package nifi.client.controller
 
 import groovy.json.JsonSlurper
+import nifi.client.NiFi
 
 /**
  * Created by mburgess on 12/30/15.
  */
-class BulletinBoard {
+class Config {
     NiFi nifi
     private final JsonSlurper slurper = new JsonSlurper()
-    private Object bulletinBoard
+    private Object config
     private clientId
 
-    protected BulletinBoard(NiFi nifi) {
+    protected Config(NiFi nifi) {
         super()
         this.nifi = nifi
     }
 
     def propertyMissing(String name) {
-        def s = slurper.parseText("${nifi.urlString}/nifi-api/controller/bulletin-board".toURL().text)
-        bulletinBoard = s?.bulletinBoard
+        def s = slurper.parseText("${nifi.urlString}/nifi-api/controller/config".toURL().text)
+        config = s?.config
         clientId =  s?.revision?.clientId
-        bulletinBoard[name]
+        config[name]
     }
 }

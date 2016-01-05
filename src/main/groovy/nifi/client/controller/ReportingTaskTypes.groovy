@@ -13,108 +13,98 @@
  * limitations under the License.
  *
  ******************************************************************************/
-package nifi.client
+package nifi.client.controller
 
 import groovy.json.JsonSlurper
+import nifi.client.NiFi
 
 /**
  * Created by mburgess on 12/30/15.
  */
-class Processors implements Map<String, Processor> {
+class ReportingTaskTypes implements Map<String, Object> {
     NiFi nifi
     private final JsonSlurper slurper = new JsonSlurper()
-    private String processGroup
-    protected final Map<String, Processor> processorIdMap = [:]
+    protected final Map<String, Object> reportingTaskTypes = [:]
 
-    protected Processors(NiFi nifi) {
+    protected ReportingTaskTypes(NiFi nifi) {
         super()
         this.nifi = nifi
     }
 
-
     @Override
     int size() {
         reload()
-        return processorIdMap.size()
+        return reportingTaskTypes.size()
     }
 
     @Override
     boolean isEmpty() {
         reload()
-        return processorIdMap.isEmpty()
+        return reportingTaskTypes.isEmpty()
     }
 
     @Override
     boolean containsKey(Object key) {
         reload()
-        return processorIdMap.containsKey(key)
+        return reportingTaskTypes.containsKey(key)
     }
 
     @Override
     boolean containsValue(Object value) {
         reload()
-        return processorIdMap.containsValue(value)
+        return reportingTaskTypes.containsValue(value)
     }
 
     @Override
-    Processor get(Object key) {
+    Object get(Object key) {
         reload()
-        return processorIdMap.get(key)
+        return reportingTaskTypes.get(key)
     }
 
     @Override
-    Processor put(String key, Processor value) {
-        throw new UnsupportedOperationException('Processor Map is immutable (for now)')
+    Object put(String key, Object value) {
+        throw new UnsupportedOperationException('ReportingTaskType Map is immutable (for now)')
     }
 
     @Override
-    Processor remove(Object key) {
-        throw new UnsupportedOperationException('Processor Map is immutable (for now)')
+    Object remove(Object key) {
+        throw new UnsupportedOperationException('ReportingTaskType Map is immutable (for now)')
     }
 
     @Override
-    void putAll(Map<? extends String, ? extends Processor> m) {
-        throw new UnsupportedOperationException('Processor Map is immutable (for now)')
+    void putAll(Map<? extends String, ? extends Object> m) {
+        throw new UnsupportedOperationException('ReportingTaskType Map is immutable (for now)')
     }
 
     @Override
     void clear() {
-        throw new UnsupportedOperationException('Processor Map is immutable (for now)')
+        throw new UnsupportedOperationException('ReportingTaskType Map is immutable (for now)')
     }
 
     @Override
     Set<String> keySet() {
         reload()
-        processorIdMap.keySet()
+        reportingTaskTypes.keySet()
     }
 
     @Override
     Collection<Object> values() {
         reload()
-        processorIdMap.values()
+        reportingTaskTypes.values()
     }
 
     @Override
     Set<Map.Entry<String, Object>> entrySet() {
         reload()
-        processorIdMap.entrySet()
-    }
-
-    Collection<Processor> findByType(String type) {
-        values().findAll { Util.getSimpleName(it.type) == type }
-    }
-
-    Collection<String> types() {
-        values().collect { Util.getSimpleName(it.type) }.unique()
+        reportingTaskTypes.entrySet()
     }
 
     def reload() {
-        synchronized (this.processorIdMap) {
-            def procs = slurper.parseText("${nifi.urlString}/nifi-api/controller/process-groups/${processGroup ?: 'root'}/processors".toURL().text).processors
-            def map = this.processorIdMap
-            def n = this.nifi
+        synchronized (this.reportingTaskTypes) {
+            def procs = slurper.parseText("${nifi.urlString}/nifi-api/controller/reporting-task-types".toURL().text).reportingTaskTypes
+            def map = this.reportingTaskTypes
             procs.each { p ->
-                map.put(p.name, new Processor(n, p))
+                map.put(nifi.client.Util.getSimpleName(p.type), p)
             }
         }
     }

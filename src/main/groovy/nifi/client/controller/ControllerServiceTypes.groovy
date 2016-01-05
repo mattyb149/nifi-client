@@ -13,9 +13,10 @@
  * limitations under the License.
  *
  ******************************************************************************/
-package nifi.client
+package nifi.client.controller
 
 import groovy.json.JsonSlurper
+import nifi.client.NiFi
 
 /**
  * Created by mburgess on 12/30/15.

@@ -13,28 +13,32 @@
  * limitations under the License.
  *
  ******************************************************************************/
-package nifi.client
+package nifi.client.controller
 
 import groovy.json.JsonSlurper
+import nifi.client.NiFi
 
 /**
  * Created by mburgess on 12/30/15.
  */
-class Status {
+class Identity {
     NiFi nifi
     private final JsonSlurper slurper = new JsonSlurper()
-    private Object status
     private clientId
 
-    protected Status(NiFi nifi) {
+    protected Identity(NiFi nifi) {
         super()
         this.nifi = nifi
     }
 
-    def propertyMissing(String name) {
-        def s = slurper.parseText("${nifi.urlString}/nifi-api/controller/status".toURL().text)
-        status = s?.controllerStatus
+    def propertyMissing(String prop) {
+        def s = slurper.parseText("${nifi.urlString}/nifi-api/controller/identity".toURL().text)
         clientId =  s?.revision?.clientId
-        status[name]
+        switch(prop) {
+            case 'name': return s?.identity
+            case 'userId': return s?.userId
+            case 'clientId': return clientId
+        }
+        null
     }
 }

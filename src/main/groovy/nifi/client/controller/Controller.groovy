@@ -13,9 +13,10 @@
  * limitations under the License.
  *
  ******************************************************************************/
-package nifi.client
+package nifi.client.controller
 
 import groovy.json.JsonSlurper
+import nifi.client.NiFi
 
 /**
  * Created by mburgess on 12/30/15.
@@ -30,6 +31,8 @@ class Controller {
     ControllerServiceTypes controllerServiceTypes
     Identity identity
     Prioritizers prioritizers
+    ProcessorTypes processorTypes
+    ReportingTaskTypes reportingTaskTypes
     private final JsonSlurper slurper = new JsonSlurper()
     private clientId
     private controller
@@ -45,6 +48,12 @@ class Controller {
         this.controllerServiceTypes = new ControllerServiceTypes(nifi)
         this.identity = new Identity(nifi)
         this.prioritizers = new Prioritizers(nifi)
+        this.processorTypes = new ProcessorTypes(nifi)
+        this.reportingTaskTypes = new ReportingTaskTypes(nifi)
+    }
+
+    def search(String query) {
+        slurper.parseText("${nifi.urlString}/nifi-api/controller/search-results?q=$query".toURL().text)?.searchResultsDTO
     }
 
     def propertyMissing(String name) {

@@ -16,16 +16,21 @@
 package nifi.client
 
 import groovy.json.JsonSlurper
+import org.apache.http.entity.mime.MultipartEntity
+
+import static groovyx.net.http.ContentType.URLENC
+import static groovyx.net.http.Method.POST
+import static groovyx.net.http.Method.PUT
 
 /**
  * Created by mburgess on 12/30/15.
  */
-class Processor implements Map<String,String> {
+class Processor implements Map<String, String> {
     NiFi nifi
     private final JsonSlurper slurper = new JsonSlurper()
-    protected Map<String,String> propertyMap = [:]
+    protected Map<String, String> propertyMap = [:]
 
-    protected Processor(NiFi nifi, Map<String,String> propMap) {
+    protected Processor(NiFi nifi, Map<String, String> propMap) {
         super()
         this.nifi = nifi
         this.propertyMap = propMap
@@ -97,7 +102,60 @@ class Processor implements Map<String,String> {
     }
 
     def start() {
-
+        updateState('RUNNING')
     }
 
+    def stop() {
+        updateState('STOPPED')
+    }
+
+    def enable() {
+        updateState('STOPPED')
+    }
+
+    def disable() {
+        updateState('DISABLED')
+    }
+
+    def updateState(String newState) {
+        def parentGroupId = propertyMap.parentGroupId
+        def id = propertyMap.id
+        def currentVersion = nifi.currentVersion
+
+        try {
+
+            nifi.http.request(PUT) { request ->
+                uri.path = "/nifi-api/controller/process-groups/${parentGroupId}/processors/${id}"
+                def putBody = [version: currentVersion, state: newState]
+
+                send URLENC, putBody
+
+                response.'404' = { throw new Exception("Couldn't process start()") }
+
+                //response.'409' = { resp, xml -> System.out << xml }
+
+                response.success = { resp, xml ->
+                    //println "Got code ${resp.statusLine.statusCode}"
+                    switch (resp.statusLine.statusCode) {
+                        case 200:
+                            // TODO Template already exists, perhaps we can delete and re-import here
+                            break
+                        case 201:
+                            // Template was created successfully
+                            //reload()
+                            break
+
+                        default:
+                            // Something went wrong, throw an exception
+                            //throw new Exception("Error importing $file")
+                            break
+                    }
+
+                }
+            }
+        }
+        catch (e) {
+            e.printStackTrace(System.err)
+        }
+    }
 }
