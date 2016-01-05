@@ -91,6 +91,11 @@ class Processor implements Map<String,String> {
         return propertyMap.entrySet()
     }
 
+    def set(Map props) {
+        // Set the properties on the Processor and update it
+
+    }
+
     def start() {
 
     }

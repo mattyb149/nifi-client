@@ -20,39 +20,24 @@ import groovy.json.JsonSlurper
 /**
  * Created by mburgess on 12/30/15.
  */
-class Controller {
+class Identity {
     NiFi nifi
-    About about
-    Status status
-    Banners banners
-    BulletinBoard bulletins
-    Config config
-    ControllerServiceTypes controllerServiceTypes
-    Identity identity
-    Prioritizers prioritizers
     private final JsonSlurper slurper = new JsonSlurper()
     private clientId
-    private controller
 
-    protected Controller(NiFi nifi) {
+    protected Identity(NiFi nifi) {
         super()
         this.nifi = nifi
-        this.about = new About(nifi)
-        this.status = new Status(nifi)
-        this.banners = new Banners(nifi)
-        this.bulletins = new BulletinBoard(nifi)
-        this.config = new Config(nifi)
-        this.controllerServiceTypes = new ControllerServiceTypes(nifi)
-        this.identity = new Identity(nifi)
-        this.prioritizers = new Prioritizers(nifi)
     }
 
-    def propertyMissing(String name) {
-
-        def s = slurper.parseText("${nifi.urlString}/nifi-api/controller".toURL().text)
-        controller = s?.controller
-        clientId = s?.revision?.clientId
-        controller[name]
-
+    def propertyMissing(String prop) {
+        def s = slurper.parseText("${nifi.urlString}/nifi-api/controller/identity".toURL().text)
+        clientId =  s?.revision?.clientId
+        switch(prop) {
+            case 'name': return s?.identity
+            case 'userId': return s?.userId
+            case 'clientId': return clientId
+        }
+        null
     }
 }
