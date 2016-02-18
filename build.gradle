@@ -23,7 +23,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '1.2.3'
 }
 
-version = '0.1'
+version = '0.2'
 description = "A Groovy/Java client for interacting with an Apache NiFi instance"
 group = 'mattyb149'
 status = 'RELEASE'
