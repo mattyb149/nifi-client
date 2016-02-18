@@ -133,11 +133,9 @@ class ProvenanceEvent implements Map<String, Object> {
     }
 
     private String parseResponse(json) {
-        def n = this.nifi
         def responseId = json.lineage.id
         // Check for completion
         if (json.lineage.finished) {
-            println json.lineage.results//.provenanceEvents.each { events.add(new ProvenanceEvent(n, it as Map)) }
             results = json.lineage.results
             nifi.http.request(DELETE) { uri.path = "/nifi-api/controller/provenance/lineage/$responseId" }
             return null
