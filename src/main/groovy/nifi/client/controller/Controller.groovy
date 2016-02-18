@@ -33,11 +33,14 @@ class Controller {
     Prioritizers prioritizers
     ProcessorTypes processorTypes
     ReportingTaskTypes reportingTaskTypes
+    History history
+    //ProcessGroup root TODO
+    Provenance provenance
     private final JsonSlurper slurper = new JsonSlurper()
     private clientId
     private controller
 
-    protected Controller(NiFi nifi) {
+    public Controller(NiFi nifi) {
         super()
         this.nifi = nifi
         this.about = new About(nifi)
@@ -50,10 +53,18 @@ class Controller {
         this.prioritizers = new Prioritizers(nifi)
         this.processorTypes = new ProcessorTypes(nifi)
         this.reportingTaskTypes = new ReportingTaskTypes(nifi)
+        this.history = new History(nifi)
+        //this.root = new ProcessGroup(nifi, [name:'root'])
+        this.provenance = new Provenance(nifi)
     }
 
     def search(String query) {
         slurper.parseText("${nifi.urlString}/nifi-api/controller/search-results?q=$query".toURL().text)?.searchResultsDTO
+    }
+
+    def history(Map queryParams) {
+        this.history.reload(queryParams)
+        this.history
     }
 
     def propertyMissing(String name) {

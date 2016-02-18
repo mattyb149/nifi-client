@@ -16,24 +16,41 @@
 package nifi.client
 
 import groovy.json.JsonSlurper
-import org.apache.http.entity.mime.MultipartEntity
+import groovyx.net.http.ContentType
 
-import static groovyx.net.http.ContentType.URLENC
-import static groovyx.net.http.Method.POST
 import static groovyx.net.http.Method.PUT
 
 /**
  * Created by mburgess on 12/30/15.
  */
-class Processor implements Map<String, String> {
+class Processor implements Map<String, Object> {
     NiFi nifi
     private final JsonSlurper slurper = new JsonSlurper()
-    protected Map<String, String> propertyMap = [:]
+    protected final Map<String, Object> propertyMap = [:]
+    protected Map<String, String> configProperties; // This is exposed as "properties" on the Processor object
 
-    protected Processor(NiFi nifi, Map<String, String> propMap) {
+    protected Processor(NiFi nifi, Map<String, Object> propMap) {
         super()
         this.nifi = nifi
-        this.propertyMap = propMap
+        this.propertyMap.putAll(propMap)
+        this.configProperties = new LinkedHashMap<String, String>(propMap.config.properties as Map) {
+            @Override
+            String put(String key, String value) {
+                super.put(key, value)
+                updateState([config: [properties: this]])
+                value
+            }
+
+            /*@Override
+            void putAll(Map<? extends String, ? extends String> m) {
+                if (m) {
+                    m.each { k, v ->
+                        super.put(k, v)
+                    }
+                    updateState([config: [properties: this]])
+                }
+            }*/
+        }
     }
 
     @Override
@@ -57,22 +74,26 @@ class Processor implements Map<String, String> {
     }
 
     @Override
-    String get(Object key) {
+    Object get(Object key) {
+        // Need to check for our own members before delegating
+        if ("properties".equals(key)) {
+            return this.configProperties
+        }
         return propertyMap.get(key)
     }
 
     @Override
-    String put(String key, String value) {
+    Object put(String key, Object value) {
         throw new UnsupportedOperationException('Processor property Map is immutable (for now)')
     }
 
     @Override
-    String remove(Object key) {
+    Object remove(Object key) {
         throw new UnsupportedOperationException('Processor property Map is immutable (for now)')
     }
 
     @Override
-    void putAll(Map<? extends String, ? extends String> m) {
+    void putAll(Map<? extends String, ? extends Object> m) {
         throw new UnsupportedOperationException('Processor property Map is immutable (for now)')
     }
 
@@ -98,26 +119,27 @@ class Processor implements Map<String, String> {
 
     def set(Map props) {
         // Set the properties on the Processor and update it
-
+        propertyMap.putAll(props)
+        updateState(props)
     }
 
     def start() {
-        updateState('RUNNING')
+        updateState(state: 'RUNNING')
     }
 
     def stop() {
-        updateState('STOPPED')
+        updateState(state: 'STOPPED')
     }
 
     def enable() {
-        updateState('STOPPED')
+        updateState(state: 'STOPPED')
     }
 
     def disable() {
-        updateState('DISABLED')
+        updateState(state: 'DISABLED')
     }
 
-    def updateState(String newState) {
+    def updateState(Map propMap) {
         def parentGroupId = propertyMap.parentGroupId
         def id = propertyMap.id
         def currentVersion = nifi.currentVersion
@@ -126,9 +148,10 @@ class Processor implements Map<String, String> {
 
             nifi.http.request(PUT) { request ->
                 uri.path = "/nifi-api/controller/process-groups/${parentGroupId}/processors/${id}"
-                def putBody = [version: currentVersion, state: newState]
+                def putBody = ([revision: [version: currentVersion], processor: ([id: id] << propMap)])
+                println putBody
 
-                send URLENC, putBody
+                send ContentType.JSON, putBody
 
                 response.'404' = { throw new Exception("Couldn't process start()") }
 
@@ -138,24 +161,28 @@ class Processor implements Map<String, String> {
                     //println "Got code ${resp.statusLine.statusCode}"
                     switch (resp.statusLine.statusCode) {
                         case 200:
-                            // TODO Template already exists, perhaps we can delete and re-import here
+                            // TODO overwrite properties
                             break
                         case 201:
-                            // Template was created successfully
-                            //reload()
                             break
 
                         default:
                             // Something went wrong, throw an exception
-                            //throw new Exception("Error importing $file")
+                            throw new Exception("Error updating state with $propMap")
                             break
                     }
 
                 }
             }
+            propMap
         }
         catch (e) {
             e.printStackTrace(System.err)
         }
+    }
+
+    def history() {
+        def id = propertyMap.id
+        slurper.parseText("${nifi.urlString}/nifi-api/controller/history/processors/${id}".toURL().text)?.componentHistory
     }
 }

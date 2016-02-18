@@ -21,12 +21,20 @@ import nifi.client.NiFi
 /**
  * Created by mburgess on 12/30/15.
  */
-class ControllerServiceTypes implements Map<String, Object> {
+class History implements Map<String, Object> {
     NiFi nifi
     private final JsonSlurper slurper = new JsonSlurper()
-    protected final Map<String, Object> controllerServiceTypes = [:]
+    protected final Map<String, Object> history = [:]
+    private offset = 0
+    private count = 100
+    private sortOrder
+    private sortColumn
+    private startDate
+    private endDate
+    private userName
+    private sourceId
 
-    protected ControllerServiceTypes(NiFi nifi) {
+    protected History(NiFi nifi) {
         super()
         this.nifi = nifi
     }
@@ -35,31 +43,31 @@ class ControllerServiceTypes implements Map<String, Object> {
     @Override
     int size() {
         reload()
-        return controllerServiceTypes.size()
+        return history.size()
     }
 
     @Override
     boolean isEmpty() {
         reload()
-        return controllerServiceTypes.isEmpty()
+        return history.isEmpty()
     }
 
     @Override
     boolean containsKey(Object key) {
         reload()
-        return controllerServiceTypes.containsKey(key)
+        return history.containsKey(key)
     }
 
     @Override
     boolean containsValue(Object value) {
         reload()
-        return controllerServiceTypes.containsValue(value)
+        return history.containsValue(value)
     }
 
     @Override
     Object get(Object key) {
         reload()
-        return controllerServiceTypes.get(key)
+        return history.get(key)
     }
 
     @Override
@@ -85,40 +93,50 @@ class ControllerServiceTypes implements Map<String, Object> {
     @Override
     Set<String> keySet() {
         reload()
-        controllerServiceTypes.keySet()
+        history.keySet()
     }
 
     @Override
     Collection<Object> values() {
         reload()
-        controllerServiceTypes.values()
+        history.values()
     }
 
     @Override
     Set<Map.Entry<String, Object>> entrySet() {
         reload()
-        controllerServiceTypes.entrySet()
+        history.entrySet()
     }
 
-    Collection<Object> findByType(String type) {
-        values().findAll { getSimpleName(it.type) == type }
-    }
 
-    private String getSimpleName(String name) {
-        name[(name.lastIndexOf('.')+1)..(-1)]
-    }
+    def reload(paramMap) {
+        synchronized (this.history) {
+            def queryParams = [] as List
 
-    Collection<String> types() {
-        values().collect { getSimpleName(it.type) }.unique()
-    }
+            def o = paramMap?.offset ?: offset
+            if(o != null) queryParams.add("offset=${offset = o}")
 
-    def reload() {
-        synchronized (this.controllerServiceTypes) {
-            def procs = slurper.parseText("${nifi.urlString}/nifi-api/controller/controller-service-types".toURL().text).controllerServiceTypes
-            def map = this.controllerServiceTypes
-            procs.each { p ->
-                map.put(getSimpleName(p.type), p)
-            }
+            def ct = paramMap?.count ?: count
+            if(ct != null) queryParams.add("count=${count = ct}")
+
+            def so = paramMap?.sortOrder ?: sortOrder
+            if(so) queryParams.add("sortOrder=${sortOrder = so}");
+
+            def sd = paramMap?.startDate ?: startDate
+            if(sd) queryParams.add("startDate=${startDate = sd}");
+
+            def ed = paramMap?.endDate ?: endDate
+            if(ed) queryParams.add("endDate=${endDate = ed}");
+
+            def un = paramMap?.userName ?: userName
+            if(un) queryParams.add("userName=${userName = un}");
+
+            def si = paramMap?.sourceId ?: sourceId
+            if(si) queryParams.add("sourceId=${sourceId = si}");
+
+            def queryString = queryParams.join('&')
+            this.history.clear()
+            this.history.putAll(slurper.parseText("${nifi.urlString}/nifi-api/controller/history?${queryString}".toURL().text).history)
         }
     }
 }

@@ -35,7 +35,7 @@ class NiFi {
     private NiFi(String url) {
         this.urlString = url
         this.http = this.http = new HTTPBuilder(url)
-        this.processors = new Processors(this)
+        this.processors = new Processors(this, 'root')
         this.templates = new Templates(this)
         this.controller = new Controller(this)
         this.system = new SystemDiagnostics(this)

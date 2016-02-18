@@ -26,11 +26,11 @@ class Processors implements Map<String, Processor> {
     private String processGroup
     protected final Map<String, Processor> processorIdMap = [:]
 
-    protected Processors(NiFi nifi) {
+    protected Processors(NiFi nifi, String pGroup) {
         super()
         this.nifi = nifi
+        this.processGroup = pGroup ?: 'root'
     }
-
 
     @Override
     int size() {
@@ -112,6 +112,7 @@ class Processors implements Map<String, Processor> {
         synchronized (this.processorIdMap) {
             def procs = slurper.parseText("${nifi.urlString}/nifi-api/controller/process-groups/${processGroup ?: 'root'}/processors".toURL().text).processors
             def map = this.processorIdMap
+            // TODO clear the map?
             def n = this.nifi
             procs.each { p ->
                 map.put(p.name, new Processor(n, p))

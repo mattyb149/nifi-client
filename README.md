@@ -48,6 +48,15 @@ The above also works for stop(), enable(), and disable()
 To get the current state of a processor:
 nifi.processors.'Fetch User Data'.state
 
+To get the history:
+nifi.controller.history
+
+To get the last 10 provenance events:
+nifi.controller.provenance.get(maxResults: 10)
+
+To get the lineage for the latest provenance event:
+nifi.controller.provenance.get(maxResults: 1).get(0).lineage()
+
 This repo is very much a work in progress, and all contributions, comments, and suggestions are welcome!
 
 
