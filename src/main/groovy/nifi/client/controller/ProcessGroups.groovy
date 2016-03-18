@@ -13,20 +13,21 @@
  * limitations under the License.
  *
  ******************************************************************************/
-package nifi.client
+package nifi.client.controller
 
 import groovy.json.JsonSlurper
+import nifi.client.NiFi
 
 /**
  * Created by mburgess on 12/30/15.
  */
-class Processors implements Map<String, Processor> {
+class ProcessGroups implements Map<String, ProcessGroup> {
     NiFi nifi
     private final JsonSlurper slurper = new JsonSlurper()
     private String processGroup
-    protected final Map<String, Processor> processorIdMap = [:]
+    protected final Map<String, ProcessGroup> processorGroupMap = [:]
 
-    Processors(NiFi nifi, String pGroup) {
+    protected ProcessGroups(NiFi nifi, String pGroup) {
         super()
         this.nifi = nifi
         this.processGroup = pGroup ?: 'root'
@@ -35,87 +36,80 @@ class Processors implements Map<String, Processor> {
     @Override
     int size() {
         reload()
-        return processorIdMap.size()
+        return processorGroupMap.size()
     }
 
     @Override
     boolean isEmpty() {
         reload()
-        return processorIdMap.isEmpty()
+        return processorGroupMap.isEmpty()
     }
 
     @Override
     boolean containsKey(Object key) {
         reload()
-        return processorIdMap.containsKey(key)
+        return processorGroupMap.containsKey(key)
     }
 
     @Override
     boolean containsValue(Object value) {
         reload()
-        return processorIdMap.containsValue(value)
+        return processorGroupMap.containsValue(value)
     }
 
     @Override
-    Processor get(Object key) {
+    ProcessGroup get(Object key) {
         reload()
-        return processorIdMap.get(key)
+        return processorGroupMap.get(key)
     }
 
     @Override
-    Processor put(String key, Processor value) {
-        throw new UnsupportedOperationException('Processor Map is immutable (for now)')
+    ProcessGroup put(String key, ProcessGroup value) {
+        throw new UnsupportedOperationException('ProcessGroup Map is immutable (for now)')
     }
 
     @Override
-    Processor remove(Object key) {
-        throw new UnsupportedOperationException('Processor Map is immutable (for now)')
+    ProcessGroup remove(Object key) {
+        throw new UnsupportedOperationException('ProcessGroup Map is immutable (for now)')
     }
 
     @Override
-    void putAll(Map<? extends String, ? extends Processor> m) {
-        throw new UnsupportedOperationException('Processor Map is immutable (for now)')
+    void putAll(Map<? extends String, ? extends ProcessGroup> m) {
+        throw new UnsupportedOperationException('ProcessGroup Map is immutable (for now)')
     }
 
     @Override
     void clear() {
-        throw new UnsupportedOperationException('Processor Map is immutable (for now)')
+        throw new UnsupportedOperationException('ProcessGroup Map is immutable (for now)')
     }
 
     @Override
     Set<String> keySet() {
         reload()
-        processorIdMap.keySet()
+        processorGroupMap.keySet()
     }
 
     @Override
     Collection<Object> values() {
         reload()
-        processorIdMap.values()
+        processorGroupMap.values()
     }
 
     @Override
     Set<Map.Entry<String, Object>> entrySet() {
         reload()
-        processorIdMap.entrySet()
-    }
-
-    Collection<Processor> findByType(String type) {
-        values().findAll { Util.getSimpleName(it.type) == type }
-    }
-
-    Collection<String> types() {
-        values().collect { Util.getSimpleName(it.type) }.unique()
+        processorGroupMap.entrySet()
     }
 
     def reload() {
-        synchronized (this.processorIdMap) {
-            def procs = slurper.parseText("${nifi.urlString}/nifi-api/controller/process-groups/${processGroup ?: 'root'}/processors".toURL().text).processors
-            def map = this.processorIdMap
-            // TODO clear the map?
+        def pGroup = processGroup ?: 'root'
+        println "Fetching ${nifi.urlString}/nifi-api/controller/process-groups/${pGroup}"
+        synchronized (this.processorGroupMap) {
+            def procs = slurper.parseText("${nifi.urlString}/nifi-api/controller/process-groups/${pGroup}".toURL().text).processGroups
+            def map = this.processorGroupMap
             def n = this.nifi
             procs.each { p ->
-                map.put(p.name, new Processor(n, p))
+                map.put(p.name, new ProcessGroup(n, p))
             }
         }
     }

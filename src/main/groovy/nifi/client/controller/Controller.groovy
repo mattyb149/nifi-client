@@ -19,7 +19,7 @@ import groovy.json.JsonSlurper
 import nifi.client.NiFi
 
 /**
- * Created by mburgess on 12/30/15.
+ * An object corresponding to the Controller data model from the REST API
  */
 class Controller {
     NiFi nifi
@@ -34,7 +34,7 @@ class Controller {
     ProcessorTypes processorTypes
     ReportingTaskTypes reportingTaskTypes
     History history
-    //ProcessGroup root TODO
+    ProcessGroup root
     Provenance provenance
     private final JsonSlurper slurper = new JsonSlurper()
     private clientId
@@ -54,7 +54,7 @@ class Controller {
         this.processorTypes = new ProcessorTypes(nifi)
         this.reportingTaskTypes = new ReportingTaskTypes(nifi)
         this.history = new History(nifi)
-        //this.root = new ProcessGroup(nifi, [name:'root'])
+        this.root = new ProcessGroup(nifi, [name:'root', id:'root'], null)
         this.provenance = new Provenance(nifi)
     }
 

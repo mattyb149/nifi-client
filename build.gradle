@@ -23,7 +23,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '1.2.3'
 }
 
-version = '0.2'
+version = '0.3'
 description = "A Groovy/Java client for interacting with an Apache NiFi instance"
 group = 'mattyb149'
 status = 'RELEASE'
@@ -73,6 +73,26 @@ task(shell, dependsOn: 'classes') << {
             .start()
     proc.waitFor()
 }
+
+task('shell-debug', dependsOn: 'classes') << {
+    def classpath = sourceSets.main.runtimeClasspath + configurations.shell
+    def command = [
+            System.getProperty('JAVA_HOME') ? "${System.getProperty('JAVA_HOME') / bin / java}" : 'java',
+            '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=6006',
+            '-cp', classpath.collect().join(':'),
+            'org.codehaus.groovy.tools.shell.Main',
+            '--color',
+            '--terminal', 'unix',
+            '-Dgroovysh.prompt=nifi-shell', '-e', '"import nifi.client.*"'
+    ]
+    def proc = new ProcessBuilder(command)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectInput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+    proc.waitFor()
+}
+
 
 // custom tasks for creating source/javadoc jars
 task sourcesJar(type: Jar, dependsOn: classes) {
@@ -138,5 +158,5 @@ bintray {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "2.11"
+    gradleVersion = "2.12"
 }

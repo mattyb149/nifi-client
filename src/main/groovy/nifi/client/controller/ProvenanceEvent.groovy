@@ -28,7 +28,7 @@ import static groovyx.net.http.Method.POST
 class ProvenanceEvent implements Map<String, Object> {
     NiFi nifi
     protected Map<String, Object> propertyMap = [:]
-    Map<String, Object> results = [:]
+    Map<String, Object> results = null
 
     public static final JsonSlurper slurper = new JsonSlurper()
 
@@ -36,7 +36,6 @@ class ProvenanceEvent implements Map<String, Object> {
         super()
         this.nifi = nifi
         this.propertyMap = propMap
-        //println "Adding a new prov event with properties: $propMap"
     }
 
     @Override
@@ -61,7 +60,7 @@ class ProvenanceEvent implements Map<String, Object> {
 
     @Override
     Object get(Object key) {
-        if(key == 'results') return results;
+        if(key == 'results') return results ?: lineage()
         return propertyMap.get(key)
     }
 
@@ -117,6 +116,7 @@ class ProvenanceEvent implements Map<String, Object> {
                 send URLENC, options
 
                 response.success = { instanceResp, json ->
+                    results = [:]
                     retryUrl = parseResponse(json)
 
                     while (retryUrl) {

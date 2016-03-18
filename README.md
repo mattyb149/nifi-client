@@ -79,12 +79,23 @@ nifi.controller.history
 
 To get the last 10 provenance events:
 
-nifi.controller.provenance.get(maxResults: 10)
+nifi.controller.provenance.events(maxResults: 10)
 
 
 To get the lineage for the latest provenance event:
 
-nifi.controller.provenance.get(maxResults: 1).get(0).lineage()
+nifi.controller.provenance.events(maxResults: 1)`[0`].lineage()
+
+
+To get a process group called TestPG on the main canvas:
+
+nifi.controller.root.groups.'TestPG'
+
+
+To list the process groups under another process group (the parent named TestPG):
+
+nifi.controller.root.groups.'TestPG'.groups.keySet()
+
 
 
 This repo is very much a work in progress, and all contributions, comments, and suggestions are welcome!
@@ -97,9 +108,3 @@ License
 
  This project is licensed under the Apache License Version 2.0 except where
  otherwise noted in the source files.
-
- You are receiving this code free of charge, which represents many hours of
- effort from other individuals and corporations.  As a responsible member
- of the community, you are encouraged (but not required) to donate any
- enhancements or improvements back to the community under a similar open
- source license.  Thank you. -MB
